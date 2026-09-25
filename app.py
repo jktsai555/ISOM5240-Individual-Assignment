@@ -79,43 +79,66 @@ def text2audio(story_text: str, accent: str = "co.uk") -> io.BytesIO:
 # ==============================================================================
 
 def main():
-    # 1. Centered Header using Markdown & HTML styling
-    st.markdown(
-        "<h1 style='text-align: center; margin-bottom: 0px;'>🎈 Magic Picture Storybook</h1>", 
-        unsafe_allow_html=True
-    )
-    st.markdown(
-        "<p style='text-align: center; color: gray; margin-bottom: 25px;'>"
-        "Drop a picture below and watch the bedtime story unfold automatically!"
-        "</p>", 
-        unsafe_allow_html=True
-    )
+    # 1. Centered Header
+    st.markdown("<h1 style='text-align: center;'>🎈 Magic Picture Storybook</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: gray;'>Drop a picture below and watch the bedtime story unfold automatically!</p>", unsafe_allow_html=True)
+    st.divider()
 
     # 2. Pipeline Configuration Variables
     caption_model = "Salesforce/blip-image-captioning-base"
     story_model = "roneneldan/TinyStories-33M"
     min_story_words = 50
     max_story_words = 80
-    audio_accent = "co.uk"  # British accent suitable for HK school curricula
+    audio_accent = "co.uk"
 
-    # 3. Two-Column Dashboard Layout (Zero-scroll design)
+    # 3. Two-Column Dashboard Layout
     col_left, col_right = st.columns([1, 1], gap="large")
 
     with col_left:
-        # Drag-and-Drop Image Uploader
+        st.subheader("📸 Choose a Picture")
         uploaded_image_file = st.file_uploader(
-            "📸 Drop a picture here:",
+            "Drop your photo here:",
             type=["jpg", "jpeg", "png", "webp"],
-            help="Upload a picture to instantly trigger the story!"
+            label_visibility="collapsed"
         )
 
         if uploaded_image_file is not None:
             image = Image.open(uploaded_image_file)
-            
-            # Center the smaller image neatly within the left column
-            img_subcol1, img_subcol2, img_subcol3 = st.columns([1, 6, 1])
-            with img_subcol2:
-                # Set specific width to keep image compact and prevent vertical scroll
-                st.image(image, caption="🌟 Uploaded Picture", width=340)
+            # 直接給予適當寬度，乾淨俐落，不再巢狀套 columns！
+            st.image(image, caption="🌟 Uploaded Picture", width=380)
 
-    wi
+    with col_right:
+        if uploaded_image_file is not None:
+            with st.spinner("🧙‍♂️ Magic is happening... crafting your story & audio..."):
+                # Stage 1: Captioning
+                caption = img2text(image=image, model_name=caption_model)
+
+                # Stage 2: Story Generation
+                story_text = text2story(
+                    scenario=caption,
+                    model_name=story_model,
+                    min_words=min_story_words,
+                    max_words=max_story_words
+                )
+
+                # Stage 3: Audio Synthesis
+                audio_data = text2audio(story_text=story_text, accent=audio_accent)
+
+            # Story Deliverable
+            st.subheader("📚 Here is Your Story:")
+            st.success(story_text)
+
+            # Word count validation
+            word_count = len(story_text.split())
+            st.caption(f"📏 Story word count: approximately {word_count} words.")
+
+            # Audio Deliverable
+            st.subheader("🔊 Listen Along:")
+            st.audio(audio_data, format="audio/mp3", autoplay=True)
+        else:
+            st.info("👈 Drop an image on the left, and your story will appear here instantly!")
+
+
+# Execution entry point
+if __name__ == "__main__":
+    main()
