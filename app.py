@@ -12,7 +12,7 @@ from PIL import Image
 from transformers import pipeline
 from gtts import gTTS
 
-# ── Set up page configuration ──
+# Set up page configuration
 st.set_page_config(
     page_title="Magic Picture Storybook",
     page_icon="🎈",
@@ -21,20 +21,18 @@ st.set_page_config(
 
 
 # ==============================================================================
-# Function part: Core pipeline modules (No caching, purely direct calls)
+# Function part: Core pipeline modules
 # ==============================================================================
 
-def img2text(image: Image.Image, model_name: str = "Salesforce/blip-image-captioning-base") -> str:
+def img2text(image, model_name="Salesforce/blip-image-captioning-base"):
     """Stage 1: Generate a concise descriptive caption from an input image."""
-    # 直接在函式內部建立流水線
     captioner = pipeline("image-to-text", model=model_name)
     results = captioner(image)
     return results[0]["generated_text"]
 
 
-def text2story(scenario: str, model_name: str = "roneneldan/TinyStories-33M", min_words: int = 50, max_words: int = 80) -> str:
+def text2story(scenario, model_name="roneneldan/TinyStories-33M", min_words=50, max_words=80):
     """Stage 2: Expand the image scenario into a 50-100 word child-friendly story."""
-    # 直接在函式內部建立故事生成流水線
     story_generator = pipeline("text-generation", model=model_name)
     kid_prompt = f"Once upon a time, there was {scenario}. "
     
@@ -52,11 +50,8 @@ def text2story(scenario: str, model_name: str = "roneneldan/TinyStories-33M", mi
     return " ".join(raw_story.split())
 
 
-def text2audio(story_text: str, accent: str = "co.uk") -> io.BytesIO:
-    """
-    Stage 3: Synthesize speech from story text into an in-memory audio buffer using gTTS.
-    Returns a BytesIO stream ready for direct web playback.
-    """
+def text2audio(story_text, accent="co.uk"):
+    """Stage 3: Synthesize speech from story text into an in-memory audio buffer using gTTS."""
     tts = gTTS(text=story_text, lang='en', tld=accent, slow=False)
     audio_buffer = io.BytesIO()
     tts.write_to_fp(audio_buffer)
@@ -117,11 +112,11 @@ def main():
             st.subheader("📚 Here is Your Story:")
             st.success(story_text)
 
-            # Word count validation
+            # Word count validation (50-100 words requirement)
             word_count = len(story_text.split())
             st.caption(f"📏 Story word count: approximately {word_count} words.")
 
-            # Audio Deliverable
+            # Audio Deliverable (Auto-play enabled)
             st.subheader("🔊 Listen Along:")
             st.audio(audio_data, format="audio/mp3", autoplay=True)
         else:
