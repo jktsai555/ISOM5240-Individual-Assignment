@@ -99,7 +99,7 @@ def main():
     audio_accent = "co.uk"  # British accent suitable for HK school curricula
 
     # 3. Two-Column Dashboard Layout (Zero-scroll design)
-    col_left, col_right = st.columns(, gap="large")
+    col_left, col_right = st.columns([1, 1], gap="large")
 
     with col_left:
         # Drag-and-Drop Image Uploader
@@ -113,45 +113,9 @@ def main():
             image = Image.open(uploaded_image_file)
             
             # Center the smaller image neatly within the left column
-            img_subcol1, img_subcol2, img_subcol3 = st.columns()
+            img_subcol1, img_subcol2, img_subcol3 = st.columns([1, 6, 1])
             with img_subcol2:
                 # Set specific width to keep image compact and prevent vertical scroll
                 st.image(image, caption="🌟 Uploaded Picture", width=340)
 
-    with col_right:
-        if uploaded_image_file is not None:
-            # Automated Processing with Compact Spinner
-            with st.spinner("🧙‍♂️ Magic is happening... crafting your story & audio..."):
-                # Stage 1: Image Captioning
-                caption = img2text(image=image, model_name=caption_model)
-
-                # Stage 2: Story Generation
-                story_text = text2story(
-                    scenario=caption,
-                    model_name=story_model,
-                    min_words=min_story_words,
-                    max_words=max_story_words
-                )
-
-                # Stage 3: Audio Synthesis
-                audio_data = text2audio(story_text=story_text, accent=audio_accent)
-
-            # Story Deliverable
-            st.subheader("📚 Here is Your Story:")
-            st.success(story_text)
-
-            # Word count validation for rubric adherence (50-100 words)
-            word_count = len(story_text.split())
-            st.caption(f"📏 Story word count: approximately {word_count} words.")
-
-            # Audio Deliverable: Automatic playback on completion
-            st.subheader("🔊 Listen Along:")
-            st.audio(audio_data, format="audio/mp3", autoplay=True)
-        else:
-            # Prompt guide when empty
-            st.info("👈 Drop an image on the left, and your story will appear here instantly!")
-
-
-# Execution entry point
-if __name__ == "__main__":
-    main()
+    wi
