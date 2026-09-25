@@ -21,31 +21,21 @@ st.set_page_config(
 
 
 # ==============================================================================
-# Function part: Core pipeline modules
+# Function part: Core pipeline modules (No caching, purely direct calls)
 # ==============================================================================
-
-@st.cache_resource
-def load_caption_model(model_name: str = "Salesforce/blip-image-captioning-base"):
-    """Load and cache the image captioning model to optimize runtime efficiency."""
-    return pipeline("image-to-text", model=model_name)
-
-
-@st.cache_resource
-def load_story_model(model_name: str = "roneneldan/TinyStories-33M"):
-    """Load and cache the lightweight kid-friendly story generation model."""
-    return pipeline("text-generation", model=model_name)
-
 
 def img2text(image: Image.Image, model_name: str = "Salesforce/blip-image-captioning-base") -> str:
     """Stage 1: Generate a concise descriptive caption from an input image."""
-    captioner = load_caption_model(model_name=model_name)
+    # 直接在函式內部建立流水線
+    captioner = pipeline("image-to-text", model=model_name)
     results = captioner(image)
     return results[0]["generated_text"]
 
 
 def text2story(scenario: str, model_name: str = "roneneldan/TinyStories-33M", min_words: int = 50, max_words: int = 80) -> str:
     """Stage 2: Expand the image scenario into a 50-100 word child-friendly story."""
-    story_generator = load_story_model(model_name=model_name)
+    # 直接在函式內部建立故事生成流水線
+    story_generator = pipeline("text-generation", model=model_name)
     kid_prompt = f"Once upon a time, there was {scenario}. "
     
     min_new = int(min_words * 1.1)
@@ -65,7 +55,7 @@ def text2story(scenario: str, model_name: str = "roneneldan/TinyStories-33M", mi
 def text2audio(story_text: str, accent: str = "co.uk") -> io.BytesIO:
     """
     Stage 3: Synthesize speech from story text into an in-memory audio buffer using gTTS.
-    Returns a BytesIO stream ready for direct web playback without temporary file pollution.
+    Returns a BytesIO stream ready for direct web playback.
     """
     tts = gTTS(text=story_text, lang='en', tld=accent, slow=False)
     audio_buffer = io.BytesIO()
@@ -91,7 +81,7 @@ def main():
     max_story_words = 80
     audio_accent = "co.uk"
 
-    # 3. Two-Column Dashboard Layout
+    # 3. Two-Column Dashboard Layout (Zero-scroll design)
     col_left, col_right = st.columns([1, 1], gap="large")
 
     with col_left:
@@ -104,7 +94,6 @@ def main():
 
         if uploaded_image_file is not None:
             image = Image.open(uploaded_image_file)
-            # 直接給予適當寬度，乾淨俐落，不再巢狀套 columns！
             st.image(image, caption="🌟 Uploaded Picture", width=380)
 
     with col_right:
