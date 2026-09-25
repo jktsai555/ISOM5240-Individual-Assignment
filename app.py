@@ -1,7 +1,6 @@
 """
 ISOM5240 Individual Assignment: Storytelling Application for Children (Aged 3-10)
-Description: A modular Streamlit web application that transforms user-uploaded images 
-             into automated children's stories and audio narrations using Hugging Face pipelines.
+Description: A child-friendly, zero-scroll, automated storytelling web app with instant narration.
 """
 
 # ==============================================================================
@@ -13,11 +12,11 @@ from PIL import Image
 from transformers import pipeline
 from gtts import gTTS
 
-# ── Set up page configuration (Must be the first Streamlit command) ──
+# ── Set up page configuration (Wide layout for a clean, zero-scroll interface) ──
 st.set_page_config(
     page_title="Magic Picture Storybook",
     page_icon="🎈",
-    layout="centered"
+    layout="wide"
 )
 
 
@@ -80,9 +79,9 @@ def text2audio(story_text: str, accent: str = "co.uk") -> io.BytesIO:
 # ==============================================================================
 
 def main():
-    # 1. Page Header & Child-Friendly Introductions
+    # 1. Compact Header
     st.title("🎈 Magic Picture Storybook")
-    st.write("Welcome, little explorer! Drop a picture below, and the magic robot will instantly tell you a bedtime story!")
+    st.caption("Drop a picture below and watch the bedtime story unfold automatically!")
 
     # 2. Pipeline Configuration Variables
     caption_model = "Salesforce/blip-image-captioning-base"
@@ -91,56 +90,55 @@ def main():
     max_story_words = 80
     audio_accent = "co.uk"  # British accent suitable for HK school curricula
 
-    # 3. Drag-and-Drop Image Uploader (Standard Image Formats)
-    uploaded_image_file = st.file_uploader(
-        "📸 Drag and drop an image here (or click to browse):",
-        type=["jpg", "jpeg", "png", "webp"],
-        help="Upload a picture to immediately trigger the storytelling magic!"
-    )
+    # 3. Two-Column Dashboard Layout (Zero-scroll design)
+    col_left, col_right = st.columns([1, 1], gap="medium")
 
-    # 4. Automated Execution Trigger (No click needed, executes on drop)
-    if uploaded_image_file is not None:
-        # Step A: Immediately show the uploaded image
-        image = Image.open(uploaded_image_file)
-        st.image(image, caption="🌟 Uploaded Picture", use_container_width=True)
-        
-        st.divider()
+    with col_left:
+        # Drag-and-Drop Image Uploader
+        uploaded_image_file = st.file_uploader(
+            "📸 Drop a picture here:",
+            type=["jpg", "jpeg", "png", "webp"],
+            help="Upload a picture to instantly trigger the story!"
+        )
 
-        # Step B: Automated Multi-Stage Processing with Visual Status
-        with st.status("🧙‍♂️ Creating your magical story...", expanded=True) as status_box:
-            # Stage 1: Image Captioning
-            st.write("👀 Step 1: Looking closely at your picture...")
-            caption = img2text(image=image, model_name=caption_model)
-            st.caption(f"Detected scene: *'{caption}'*")
+        if uploaded_image_file is not None:
+            image = Image.open(uploaded_image_file)
+            st.image(image, caption="🌟 Uploaded Picture", use_container_width=True)
 
-            # Stage 2: Story Generation
-            st.write("📖 Step 2: Writing a fun bedtime story...")
-            story_text = text2story(
-                scenario=caption,
-                model_name=story_model,
-                min_words=min_story_words,
-                max_words=max_story_words
-            )
+    with col_right:
+        if uploaded_image_file is not None:
+            # Automated Processing with Compact Spinner
+            with st.spinner("🧙‍♂️ Magic is happening... crafting your story & audio..."):
+                # Stage 1: Image Captioning
+                caption = img2text(image=image, model_name=caption_model)
 
-            # Stage 3: Audio Synthesis
-            st.write("🎙️ Step 3: Recording the audio storyteller voice...")
-            audio_data = text2audio(story_text=story_text, accent=audio_accent)
+                # Stage 2: Story Generation
+                story_text = text2story(
+                    scenario=caption,
+                    model_name=story_model,
+                    min_words=min_story_words,
+                    max_words=max_story_words
+                )
 
-            status_box.update(label="✨ Your story is ready!", state="complete", expanded=False)
+                # Stage 3: Audio Synthesis
+                audio_data = text2audio(story_text=story_text, accent=audio_accent)
 
-        # Step C: Deliverable Presentation (Story Text & Audio Player)
-        st.subheader("📚 Here is Your Story:")
-        st.success(story_text)
-        
-        # Word count validation for rubric adherence (50-100 words)
-        word_count = len(story_text.split())
-        st.caption(f"📏 Story word count: approximately {word_count} words.")
+            # Story Deliverable
+            st.subheader("📚 Here is Your Story:")
+            st.success(story_text)
 
-        st.subheader("🔊 Listen to the Story:")
-        st.audio(audio_data, format="audio/mp3")
+            # Word count validation for rubric adherence (50-100 words)
+            word_count = len(story_text.split())
+            st.caption(f"📏 Story word count: approximately {word_count} words.")
+
+            # Audio Deliverable: Automatic playback on completion
+            st.subheader("🔊 Listen Along:")
+            st.audio(audio_data, format="audio/mp3", autoplay=True)
+        else:
+            # Prompt guide when empty
+            st.info("👈 Drop an image on the left, and your story will appear here instantly!")
 
 
 # Execution entry point
 if __name__ == "__main__":
     main()
-
