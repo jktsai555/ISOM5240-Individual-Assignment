@@ -12,7 +12,7 @@ from PIL import Image
 from transformers import pipeline
 from gtts import gTTS
 
-# ── Set up page configuration (Wide layout for a clean, zero-scroll interface) ──
+# ── Set up page configuration ──
 st.set_page_config(
     page_title="Magic Picture Storybook",
     page_icon="🎈",
@@ -79,9 +79,17 @@ def text2audio(story_text: str, accent: str = "co.uk") -> io.BytesIO:
 # ==============================================================================
 
 def main():
-    # 1. Compact Header
-    st.title("🎈 Magic Picture Storybook")
-    st.caption("Drop a picture below and watch the bedtime story unfold automatically!")
+    # 1. Centered Header using Markdown & HTML styling
+    st.markdown(
+        "<h1 style='text-align: center; margin-bottom: 0px;'>🎈 Magic Picture Storybook</h1>", 
+        unsafe_allow_html=True
+    )
+    st.markdown(
+        "<p style='text-align: center; color: gray; margin-bottom: 25px;'>"
+        "Drop a picture below and watch the bedtime story unfold automatically!"
+        "</p>", 
+        unsafe_allow_html=True
+    )
 
     # 2. Pipeline Configuration Variables
     caption_model = "Salesforce/blip-image-captioning-base"
@@ -91,7 +99,7 @@ def main():
     audio_accent = "co.uk"  # British accent suitable for HK school curricula
 
     # 3. Two-Column Dashboard Layout (Zero-scroll design)
-    col_left, col_right = st.columns([1, 1], gap="medium")
+    col_left, col_right = st.columns(, gap="large")
 
     with col_left:
         # Drag-and-Drop Image Uploader
@@ -103,7 +111,12 @@ def main():
 
         if uploaded_image_file is not None:
             image = Image.open(uploaded_image_file)
-            st.image(image, caption="🌟 Uploaded Picture", use_container_width=True)
+            
+            # Center the smaller image neatly within the left column
+            img_subcol1, img_subcol2, img_subcol3 = st.columns()
+            with img_subcol2:
+                # Set specific width to keep image compact and prevent vertical scroll
+                st.image(image, caption="🌟 Uploaded Picture", width=340)
 
     with col_right:
         if uploaded_image_file is not None:
